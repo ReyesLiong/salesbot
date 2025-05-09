@@ -39,7 +39,14 @@ async def handle_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["awaiting_payment"] = True
     else:
         context.user_data.setdefault("cart", []).append(data)
-        await query.edit_message_text(f"✅ Added {PRODUCTS[data]['name']} to cart. Use /start to add more.")
+        keyboard = [[InlineKeyboardButton(p["name"], callback_data=key)] for key, p in PRODUCTS.items()]
+        keyboard.append([InlineKeyboardButton("🛒 View Cart & Checkout", callback_data="checkout")])
+
+        await query.edit_message_text(
+            f"✅ Added {PRODUCTS[data]['name']} to cart.\n\nSelect more items or proceed to checkout:",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.user_data.get("awaiting_payment"):
