@@ -78,8 +78,17 @@ async def handle_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton(PRODUCT_LOOKUP[item_id], callback_data=f"add_{item_id}")]
             for item_id, _ in CATEGORIES[category]
         ]
-        keyboard.append([InlineKeyboardButton("🔙 Back to Categories", callback_data="back")])
-        await query.edit_message_text(f"📦 {category} Products:", reply_markup=InlineKeyboardMarkup(keyboard))
+        keyboard.append([
+            InlineKeyboardButton("🔙 Back to Categories", callback_data="back"),
+            InlineKeyboardButton("🛒 View Cart", callback_data="checkout")
+        ])
+        cart = USER_CARTS.get(user_id, [])
+        total = sum(PRICES[i] for i in cart)
+        count = len(cart)
+        await query.edit_message_text(
+            f"📦 {category} Products (Cart: {count} items, ${total}):",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        ))
 
     elif data.startswith("add_"):
         item = data[4:]
@@ -101,7 +110,9 @@ async def handle_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
             keyboard.append([InlineKeyboardButton("🔙 Back to Categories", callback_data="back")])
             await query.edit_message_text(
-                f"✅ Added {PRODUCT_LOOKUP[item]} to cart.\n\n📦 {category} Products:",
+                f"✅ Added {PRODUCT_LOOKUP[item]} to cart.
+
+📦 {category} Products:",
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
 
@@ -135,6 +146,7 @@ async def handle_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     elif data == "back":
+        await query.message.delete()
         await start(update, context)
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
