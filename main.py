@@ -85,7 +85,25 @@ async def handle_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
         item = data[4:]
         cart = USER_CARTS.setdefault(user_id, [])
         cart.append(item)
-        await query.edit_message_text(f"✅ Added {PRODUCT_LOOKUP[item]} to your cart. Use /start to browse more.")
+
+        # Find the category it came from
+        category = None
+        for cat, items in CATEGORIES.items():
+            if any(i == item for i, _ in items):
+                category = cat
+                break
+
+        # Rebuild keyboard for the same category
+        if category:
+            keyboard = [
+                [InlineKeyboardButton(PRODUCT_LOOKUP[item_id], callback_data=f"add_{item_id}")]
+                for item_id, _ in CATEGORIES[category]
+            ]
+            keyboard.append([InlineKeyboardButton("🔙 Back to Categories", callback_data="back")])
+            await query.edit_message_text(
+                f"✅ Added {PRODUCT_LOOKUP[item]} to cart.\n\n📦 {category} Products:",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
 
     elif data == "checkout":
         cart = USER_CARTS.get(user_id, [])
